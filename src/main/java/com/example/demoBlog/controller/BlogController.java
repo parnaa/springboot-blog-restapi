@@ -29,18 +29,13 @@ public class BlogController {
     private final BlogService blogService;
     private final UserRepository userRepository;
 
+    // PROTECTED ENDPOINTS - JWT AUTHENTICATION REQUIRED
+    
     @PostMapping
     public ResponseEntity<Blog> createBlog(@RequestBody BlogRequest request, @AuthenticationPrincipal UserDetails userDetails) {
         User user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow();
         Blog blog = blogService.createBlog(user, request.getTitle(), request.getContent());
         return ResponseEntity.ok(blog);
-    }
-
-    @GetMapping
-    public ResponseEntity<List<Blog>> getBlogs(@AuthenticationPrincipal UserDetails userDetails) {
-        User user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow();
-        List<Blog> blogs = blogService.getBlogs(user);
-        return ResponseEntity.ok(blogs);
     }
 
     @PutMapping("/{id}")
@@ -57,22 +52,25 @@ public class BlogController {
         return ResponseEntity.ok("Blog deleted");
     }
 
-    // PUBLIC ENDPOINTS - NO AUTHENTICATION REQUIRED
-    
-    @PostMapping("/public")
-    public ResponseEntity<Blog> createBlogPublic(@RequestBody BlogRequest request) {
-        // For testing, we'll use the first user or create a default user
-        User user = userRepository.findAll().stream().findFirst()
-                .orElseThrow(() -> new RuntimeException("No users found. Register a user first."));
-        Blog blog = blogService.createBlog(user, request.getTitle(), request.getContent());
-        return ResponseEntity.ok(blog);
+    @GetMapping("/my-blogs")
+    public ResponseEntity<List<Blog>> getMyBlogs(@AuthenticationPrincipal UserDetails userDetails) {
+        User user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow();
+        List<Blog> blogs = blogService.getBlogs(user);
+        return ResponseEntity.ok(blogs);
     }
 
+    // PUBLIC ENDPOINTS - NO AUTHENTICATION REQUIRED (READ ONLY)
+    
     @GetMapping("/public")
     public ResponseEntity<List<Blog>> getAllBlogsPublic() {
-        // Get all blogs from all users
         List<Blog> allBlogs = blogService.getAllBlogs();
         return ResponseEntity.ok(allBlogs);
+    }
+
+    @GetMapping("/public/{id}")
+    public ResponseEntity<Blog> getBlogByIdPublic(@PathVariable Long id) {
+        Blog blog = blogService.getBlogById(id);
+        return ResponseEntity.ok(blog);
     }
 
     @GetMapping("/public/user/{username}")

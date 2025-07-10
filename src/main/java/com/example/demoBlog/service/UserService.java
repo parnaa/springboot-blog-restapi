@@ -1,5 +1,7 @@
 package com.example.demoBlog.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -14,11 +16,13 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-
 public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    
+    @Autowired
+    @Lazy
+    private PasswordEncoder passwordEncoder;
 
     public User register(String username, String password) {
         if (userRepository.findByUsername(username).isPresent()) {
@@ -50,7 +54,7 @@ public class UserService implements UserDetailsService {
         return org.springframework.security.core.userdetails.User
                  .withUsername(user.getUsername())
                  .password(user.getPassword())
-                 .authorities("USER")
+                 .authorities("ROLE_USER")
                  .build();
     }  
 

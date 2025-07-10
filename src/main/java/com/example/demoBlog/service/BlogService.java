@@ -48,4 +48,9 @@ public class BlogService {
             throw new RuntimeException("Unauthorized");
         blogRepository.delete(blog);
     }
+
+    public Blog getBlogById(Long id) {
+        return blogRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Blog not found"));
+    }
 }

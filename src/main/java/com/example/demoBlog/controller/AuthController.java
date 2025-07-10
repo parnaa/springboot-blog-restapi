@@ -4,14 +4,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demoBlog.dto.LoginRequest;
+import com.example.demoBlog.dto.LoginResponse;
 import com.example.demoBlog.dto.RegisterRequest;
 import com.example.demoBlog.service.UserService;
+import com.example.demoBlog.util.JwtUtil;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody RegisterRequest request) {
@@ -38,20 +42,21 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
         try {
             authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
             );
-            return ResponseEntity.ok("Login successful");
+            
+            UserDetails userDetails = userService.loadUserByUsername(request.getUsername());
+            String token = jwtUtil.generateToken(userDetails);
+            
+            LoginResponse response = new LoginResponse(token, request.getUsername(), 86400000L); // 24 hours
+            return ResponseEntity.ok(response);
         } catch (org.springframework.security.authentication.BadCredentialsException | 
                  org.springframework.security.authentication.DisabledException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new LoginResponse(null, null, 0L));
         }
-    }
-
-    @PostMapping("/test")
-    public ResponseEntity<String> test() {
-        return ResponseEntity.ok("Test endpoint working");
     }
 }
