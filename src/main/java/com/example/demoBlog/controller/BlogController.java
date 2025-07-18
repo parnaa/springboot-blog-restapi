@@ -19,6 +19,7 @@ import com.example.demoBlog.model.Blog;
 import com.example.demoBlog.model.User;
 import com.example.demoBlog.repository.UserRepository;
 import com.example.demoBlog.service.BlogService;
+import com.example.demoBlog.service.NotificationService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 public class BlogController {
     private final BlogService blogService;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     // PROTECTED ENDPOINTS - JWT AUTHENTICATION REQUIRED
     
@@ -35,6 +37,10 @@ public class BlogController {
     public ResponseEntity<Blog> createBlog(@RequestBody BlogRequest request, @AuthenticationPrincipal UserDetails userDetails) {
         User user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow();
         Blog blog = blogService.createBlog(user, request.getTitle(), request.getContent());
+        
+        // Send real-time notification to all users
+        notificationService.sendBlogCreatedNotification(blog, user.getUsername());
+        
         return ResponseEntity.ok(blog);
     }
 
@@ -42,13 +48,22 @@ public class BlogController {
     public ResponseEntity<Blog> updateBlog(@PathVariable Long id, @RequestBody BlogRequest request, @AuthenticationPrincipal UserDetails userDetails) {
         User user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow();
         Blog blog = blogService.updateBlog(user, id, request.getTitle(), request.getContent());
+        
+        // Send real-time notification to all users
+        notificationService.sendBlogUpdatedNotification(blog, user.getUsername());
+        
         return ResponseEntity.ok(blog);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteBlog(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
         User user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow();
+        Blog blog = blogService.getBlogById(id); // Get blog details before deletion
         blogService.deleteBlog(user, id);
+        
+        // Send real-time notification to all users
+        notificationService.sendBlogDeletedNotification(blog, user.getUsername());
+        
         return ResponseEntity.ok("Blog deleted");
     }
 

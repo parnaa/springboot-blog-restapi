@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.demoBlog.dto.LoginRequest;
 import com.example.demoBlog.dto.LoginResponse;
 import com.example.demoBlog.dto.RegisterRequest;
+import com.example.demoBlog.service.NotificationService;
 import com.example.demoBlog.service.UserService;
 import com.example.demoBlog.util.JwtUtil;
 
@@ -25,12 +26,17 @@ public class AuthController {
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
+    private final NotificationService notificationService;
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody RegisterRequest request) {
         System.out.println("Register endpoint called with username: " + request.getUsername());
         try {
             userService.register(request.getUsername(), request.getPassword());
+            
+            // Send notification about new user
+            notificationService.sendUserJoinedNotification(request.getUsername());
+            
             return ResponseEntity.ok("User registered successfully");
         } catch (RuntimeException e) {
             System.out.println("RuntimeException: " + e.getMessage());

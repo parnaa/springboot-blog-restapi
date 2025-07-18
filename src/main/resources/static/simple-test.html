@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple WebSocket Test</title>
+</head>
+<body>
+    <h1>WebSocket Connection Test</h1>
+    <p>If you can see this page, static resources are working!</p>
+    
+    <div>
+        <button onclick="testConnection()">Test WebSocket Connection</button>
+        <p id="status">Not connected</p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script>
+        function testConnection() {
+            document.getElementById('status').textContent = 'Attempting to connect...';
+            
+            try {
+                const socket = new SockJS('/ws');
+                const stompClient = Stomp.over(socket);
+                
+                stompClient.connect({}, function(frame) {
+                    document.getElementById('status').textContent = 'WebSocket Connected Successfully!';
+                    console.log('Connected: ' + frame);
+                    stompClient.disconnect();
+                }, function(error) {
+                    document.getElementById('status').textContent = 'Connection Error: ' + error;
+                    console.error('Connection error:', error);
+                });
+            } catch (e) {
+                document.getElementById('status').textContent = 'JavaScript Error: ' + e.message;
+                console.error('JavaScript error:', e);
+            }
+        }
+    </script>
+</body>
+</html>
